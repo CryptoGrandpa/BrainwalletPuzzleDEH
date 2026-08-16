@@ -54,3 +54,6 @@ TARGET_ADDRESS = "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU"
 PUZZLE_MIN = 0x400000000000000000   # 2^70, start of puzzle 71's range
 PUZZLE_MAX = 0x7fffffffffffffffff   # 2^71 - 1, end of puzzle 71's range
 You can use Copilot, Claude etc. to get the hex values you would need use to replace those above for those puzzles.
+
+Remember to remove the scanned_chunks.txt file before trying to start with a new Target address to solve another puzzle.
+
