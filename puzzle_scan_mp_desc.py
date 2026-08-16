@@ -11,8 +11,8 @@ import ecdsa
 import base58
 
 TARGET_ADDRESS = "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU"
-RANGE_START = 0x400000000000000000
-RANGE_END = 0x400000000000100000  # inclusive
+RANGE_START = 0x400000000000100000
+RANGE_END = 0x400000000000200000  # inclusive
 
 def hash160(data: bytes) -> bytes:
     return hashlib.new("ripemd160", hashlib.sha256(data).digest()).digest()

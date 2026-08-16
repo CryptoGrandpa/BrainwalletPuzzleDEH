@@ -10,15 +10,27 @@ import os
 import multiprocessing as mp
 import ecdsa
 import base58
+import datetime
 
 TARGET_ADDRESS = "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU"
 PUZZLE_MIN = 0x400000000000000000   # 2^70, start of puzzle 71's range
 PUZZLE_MAX = 0x7fffffffffffffffff   # 2^71 - 1, end of puzzle 71's range
 CHUNK_SIZE = 0x100000               # 1,048,576 keys per chunk (same size used before)
-
+PREFIX_SHIFT = 44     # bits below the 7-hex-digit prefix (18 hex digits - 7 = 11 hex digits = 44 bits)
+MIN_ONES = 9
+MAX_ONES = 19
 LEDGER_FILE = "scanned_chunks.txt"
-
 TOTAL_CHUNKS = (PUZZLE_MAX - PUZZLE_MIN + 1) // CHUNK_SIZE
+
+def chunk_prefix_popcount(chunk_index: int) -> int:
+    """Number of 1-bits in the 7-hex-digit prefix of this chunk's starting key."""
+    start = PUZZLE_MIN + chunk_index * CHUNK_SIZE
+    prefix = start >> PREFIX_SHIFT
+    return bin(prefix).count("1")
+
+def is_promising_chunk(chunk_index: int) -> bool:
+    ones = chunk_prefix_popcount(chunk_index)
+    return MIN_ONES <= ones <= MAX_ONES
 
 def load_scanned_chunks():
     if not os.path.exists(LEDGER_FILE):
@@ -33,8 +45,11 @@ def record_scanned_chunk(chunk_index: int):
 def pick_random_unused_chunk(scanned: set) -> int:
     while True:
         candidate = random.randint(0, TOTAL_CHUNKS - 1)
-        if candidate not in scanned:
-            return candidate
+        if candidate in scanned:
+            continue
+        if not is_promising_chunk(candidate):
+            continue
+        return candidate
 
 def chunk_bounds(chunk_index: int):
     start = PUZZLE_MIN + chunk_index * CHUNK_SIZE
@@ -156,8 +171,10 @@ def scan_chunk(range_start: int, range_end: int, num_workers: int = 4):
         print(f"Address: {address}")
         return priv_int
     else:
-        print("No match found in this chunk.")
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] No match found in this chunk.")
         return None
+
 
 if __name__ == "__main__":
     print(f"Total chunks in puzzle #71 keyspace: {TOTAL_CHUNKS}")
@@ -176,3 +193,6 @@ if __name__ == "__main__":
     record_scanned_chunk(chunk_index)
     print(f"\nChunk #{chunk_index} recorded as scanned.")
     print(f"Total chunks scanned so far: {len(scanned) + 1}")
+
+    if result is not None:
+        exit(42)   # special code meaning "found it"
